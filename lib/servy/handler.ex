@@ -23,17 +23,14 @@ defmodule Servy.Handler do
   end
 
   def route(%{path: "/wildthings"}) do
-    # TODO: Create a new map that also has the response body:
     %{method: "GET", path: "/wildthings", status: 200, resp_body: "Bears, Lions, Tigers"}
   end
 
   def route(%{path: "/bears"}) do
-    # TODO: Create a new map that also has the response body:
     %{method: "GET", path: "/wildthings", status: 200, resp_body: "Rahim, karim, jasim"}
   end
 
   def route(%{path: path}) do
-    # TODO: Create a new map that also has the response body:
     %{
       method: "GET",
       path: path,
@@ -43,7 +40,6 @@ defmodule Servy.Handler do
   end
 
   def format_response(conv) do
-    # TODO: Use values in the map to create an HTTP response string:
     """
     HTTP/1.1 #{conv.status} #{status_reason(conv.status)}
     Content-Type: text/html
