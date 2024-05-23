@@ -2,41 +2,52 @@ defmodule Servy.Handler do
   def handle(request) do
     request
     |> parse
+    |> rewrite_path
     |> log
     |> route
+    |> track
     |> format_response
   end
 
-  def log(conv) do
-    IO.inspect(conv)
+  def track(%{status: 404, path: path} = conv) do
+    IO.puts("Warning: #{path} is on the loose!")
+    conv
   end
 
+  def track(conv), do: conv
+
+  def rewrite_path(%{path: "/wildlife"} = conv) do
+    %{conv | path: "/wildthings"}
+  end
+
+  def rewrite_path(conv), do: conv
+
+  def log(conv), do: IO.inspect(conv)
+
   def parse(request) do
-    # TODO: Parse the request string into a map:
     [method, path, _] =
       request
       |> String.split("\n")
       |> List.first()
       |> String.split(" ")
 
-    %{method: method, path: path, status: 200, resp_body: ""}
+    %{method: method, path: path, resp_body: "", status: nil}
   end
 
-  def route(%{path: "/wildthings"}) do
-    %{method: "GET", path: "/wildthings", status: 200, resp_body: "Bears, Lions, Tigers"}
+  def route(%{method: "GET", path: "/wildthings"} = conv) do
+    %{conv | status: 200, resp_body: "Bears, Lions, Tigers"}
   end
 
-  def route(%{path: "/bears"}) do
-    %{method: "GET", path: "/wildthings", status: 200, resp_body: "Rahim, karim, jasim"}
+  def route(%{method: "GET", path: "/bears"} = conv) do
+    %{conv | status: 200, resp_body: "Teddy, Smokey, Paddington"}
   end
 
-  def route(%{path: path}) do
-    %{
-      method: "GET",
-      path: path,
-      status: 404,
-      resp_body: "something went wrong. path #{path} was not found"
-    }
+  def route(%{method: "GET", path: "/bears/" <> id} = conv) do
+    %{conv | status: 200, resp_body: "Bear #{id}"}
+  end
+
+  def route(%{path: path} = conv) do
+    %{conv | status: 404, resp_body: "No #{path} here!"}
   end
 
   def format_response(conv) do
@@ -70,7 +81,8 @@ Accept: */*
 """
 
 response = Servy.Handler.handle(request)
-IO.inspect(response)
+
+IO.puts(response)
 
 request = """
 GET /bears HTTP/1.1
@@ -81,10 +93,11 @@ Accept: */*
 """
 
 response = Servy.Handler.handle(request)
-IO.inspect(response)
+
+IO.puts(response)
 
 request = """
-GET /all HTTP/1.1
+GET /bigfoot HTTP/1.1
 Host: example.com
 User-Agent: ExampleBrowser/1.0
 Accept: */*
@@ -92,4 +105,29 @@ Accept: */*
 """
 
 response = Servy.Handler.handle(request)
-IO.inspect(response)
+
+IO.puts(response)
+
+request = """
+GET /bears/1 HTTP/1.1
+Host: example.com
+User-Agent: ExampleBrowser/1.0
+Accept: */*
+
+"""
+
+response = Servy.Handler.handle(request)
+
+IO.puts(response)
+
+request = """
+GET /wildlife HTTP/1.1
+Host: example.com
+User-Agent: ExampleBrowser/1.0
+Accept: */*
+
+"""
+
+response = Servy.Handler.handle(request)
+
+IO.puts(response)
